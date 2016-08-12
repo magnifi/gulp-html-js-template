@@ -18,6 +18,10 @@ module.exports = function( options ) {
 		options.ext = 'js';
 	}
 	
+	if( options.global == undefined ) {
+		options.global = 'template';
+	}
+	
 	return through.obj( function( file, enc, cb ) {
 		if (file.isNull()) {
 			cb(null, file);
@@ -33,7 +37,7 @@ module.exports = function( options ) {
 			
 			var html = cheerio.load( file.contents.toString() );
 			var templates = parseTemplates( html );
-			var fileContent = parseFileContent( html );
+			var fileContent = parseFileContent( html, options.global);
 			var compiled = template( fileContent );
 			var content = compiled( { templates:JSON.stringify( templates ) } );
 			file.contents = new Buffer( content );
@@ -69,12 +73,12 @@ function parseTemplates( html ) {
 	return data;
 }
 
-function parseFileContent( html ) {
+function parseFileContent( html, globalVar) {
 	
 	var node = html( '#file-content' );
 	if( node.is( '#file-content' ) ) {
 		return node.html();
 	} else {
-		return 'var templates = <%= templates %>';
+		return 'var ' + globalVar + ' = <%= templates %>';
 	}
 }
